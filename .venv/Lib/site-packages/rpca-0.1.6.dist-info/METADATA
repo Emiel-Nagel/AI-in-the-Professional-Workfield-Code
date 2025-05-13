@@ -1,0 +1,56 @@
+Metadata-Version: 2.1
+Name: rpca
+Version: 0.1.6
+Summary: Robust PCA using Accelerated Alternating Projection
+Home-page: https://github.com/loiccoyle/RPCA
+License: MIT
+Author: Loic Coyle
+Author-email: loic.coyle@hotmail.fr
+Requires-Python: >=3.9,<3.13
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Dist: numpy (>=2.0.0,<3.0.0)
+Requires-Dist: scipy (>=1.11.3,<2.0.0)
+Project-URL: Repository, https://github.com/loiccoyle/RPCA
+Description-Content-Type: text/markdown
+
+# AccAltProj for robust PCA
+
+<p align="center">
+  <a href="https://github.com/loiccoyle/RPCA/actions/workflows/ci.yml"><img src="https://github.com/loiccoyle/RPCA/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://pypi.org/project/rpca/"><img src="https://img.shields.io/pypi/v/rpca"></a>
+  <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img src="https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational">
+</p>
+
+> Port of the AccAltProj algorithm for robust PCA to python.
+
+<div align="center">
+  <image src="https://github.com/loiccoyle/RPCA/assets/33181239/dbccf187-740f-461f-8e05-78ad497b2d30" />
+</div>
+
+This is a python port of the [AccAltProj algorithm for robust PCA](https://github.com/caesarcai/AccAltProj_for_RPCA), described in this [paper](https://arxiv.org/abs/1711.05519).
+
+This implementation follows `sklearn`'s `fit` & `transform` API.
+
+## 📦 Installation
+
+Requires python 3
+
+In a terminal:
+
+```sh
+pip install rpca
+```
+
+As always, it is usually a good idea to use a [virtual environment](https://docs.python.org/3/library/venv.html).
+
