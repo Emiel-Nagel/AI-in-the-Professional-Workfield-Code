@@ -9,7 +9,7 @@ import pyrpca
 
 def fetch_data():
     # Load the dataset
-    dataset = pd.read_csv('Dataset/refData_obf.csv')
+    dataset = pd.read_csv('Code_Emiel/Dataset/refData_obf.csv')
 
     cols = dataset.columns
     features = dataset.loc[:, cols[1:]].values              # Exclude the sample names (index 0) from features
@@ -117,7 +117,7 @@ def export_suspects_to_excel(
     dataset: pd.DataFrame,
     rpca_suspects: np.ndarray,
     pyrpca_suspects: np.ndarray,
-    file_path: str = "Output/RPCA suspect_samples.xlsx",
+    file_path: str = "Code_Emiel/Output/RPCA suspect_samples.xlsx",
 ):
     """Write the suspect rows into an Excel workbook.
 
