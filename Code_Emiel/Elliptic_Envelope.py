@@ -13,31 +13,24 @@ def fetch_data():
     dataset = pd.read_csv('Code_Emiel/Dataset/refData_obf.csv')
 
     cols = dataset.columns
-    features = dataset.loc[:, cols[1:]].values              # Exclude the sample names (index 0) from features
-    mask = ~np.isnan(features).any(axis=1)
-    features = features[mask]                               # Drop samples with some missing values
+    raw_features = dataset.loc[:, cols[1:]].values              # Exclude the sample names (index 0) from features
+    mask = ~np.isnan(raw_features).any(axis=1)
+    features = raw_features[mask]                               # Drop samples with some missing values
     scaled_features = StandardScaler().fit_transform(features)  # Standardize the features
     features_pca = PCA(n_components=2).fit_transform(scaled_features)
-    return dataset, features, scaled_features, features_pca
+    return dataset, raw_features, features, scaled_features, features_pca
 
-def detect_outliers(outlier_detector, features, alpha=0.05):
-    # if type(features[0]) == str:
-    #     features = [features]
+def detect_outliers(outlier_detector, sample_names, features, alpha=0.05):
     squared_distances = outlier_detector.decision_function(features)
     distances = np.sqrt(np.abs(squared_distances))  # Convert to distances
     print("Max:", np.max(distances), "Min:", np.min(distances))
-    # log_distances = np.log(distances)
 
-    order = np.argsort(distances)
-    rank = np.empty_like(distances)
-    rank[order] = np.arange(len(distances))
-    print(rank)
-    p_emp = rank / len(distances)  # Normalize ranks to [0, 1]
-
-    outlier_probabilities = chi2.cdf(distances, df=outlier_detector.n_features_in_)
-    outliers = np.where(outlier_probabilities > 1 - alpha)[0]
-    percentage_outliers = (outliers.size / len(features)) * 100
-    return outlier_probabilities, outliers, percentage_outliers
+    p_values = chi2.cdf(distances, df=outlier_detector.n_features_in_)
+    is_outlier = p_values > (1 - alpha)
+    outlier_names = list(sample_names[is_outlier])
+    confidences = p_values
+    pct = is_outlier.sum() / len(features) * 100
+    return outlier_names, confidences, pct
 
 def plot(data, title, xlabel, ylabel, extra_plots=[]):
     plt.figure(figsize=(10, 6))
@@ -53,19 +46,29 @@ def plot(data, title, xlabel, ylabel, extra_plots=[]):
 
 def main():
     alpha = 0.05
-    selected_data_type = 1
-    dataset, features, scaled_features, features_pca = fetch_data()
-    selected_data = [dataset, features, scaled_features, features_pca][selected_data_type]
+    selected_data_type = 2
+    dataset, raw_features, features, scaled_features, features_pca = fetch_data()
+    selected_data = [dataset, raw_features, features, scaled_features, features_pca][selected_data_type]
     
     outlier_detector = EllipticEnvelope(contamination=0.49, support_fraction=1, random_state=42)
-    outlier_detector.fit(selected_data)
+    outlier_detector.fit(features)
+    print(features.shape)
+    squared_distances = outlier_detector.decision_function(features)
+    distances = np.sqrt(np.abs(squared_distances))  # Convert to distances
+    print("Max:", np.max(distances), "Min:", np.min(distances))
+
+    p_values = chi2.cdf(distances, df=outlier_detector.n_features_in_)
+    is_outlier = p_values > (1 - alpha)
+    outlier_names = list(sample_names[is_outlier])
+    confidences = p_values
+    pct = is_outlier.sum() / len(features) * 100
+
 
     # Detect outliers in the dataset
-    outlier_probabilities, outliers, percentage_outliers = detect_outliers(outlier_detector, selected_data, alpha)
-    print(f"{len(outliers)} outliers detected from alpha = {alpha}:")
-    print(outliers)
-    print(f"Percentage outliers in the dataset: {percentage_outliers:.2f}%")
+    # outlier_names, confidences, pct = detect_outliers(outlier_detector, raw_features, alpha)
+    print(f"{len(outlier_names)} outliers ({pct:.2f}% of samples):")
+    print(outlier_names)
 
-    extra_plots = [lambda: plt.axhline(y=1-alpha, color='r', linestyle='--', label=f'Selection Threshold: alpha = {alpha}')]
-    plot(outlier_probabilities, "Outlier Probabilities", "Sample Index", "Outlier Probability", extra_plots)
-    return "Hello, World!"
+    # extra_plots = [lambda: plt.axhline(y=1-alpha, color='r', linestyle='--', label=f'Selection Threshold: alpha = {alpha}')]
+    # plot(outlier_probabilities, "Outlier Probabilities", "Sample Index", "Outlier Probability", extra_plots)
+    return outlier_names, confidences
