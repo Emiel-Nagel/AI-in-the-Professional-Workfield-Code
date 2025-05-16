@@ -14,11 +14,17 @@ def fetch_data():
 
     cols = dataset.columns
     raw_features = dataset.loc[:, cols[1:]].values              # Exclude the sample names (index 0) from features
+    sample_names = dataset.loc[:, cols[0]].values              # Sample names are in the first column
+
     mask = ~np.isnan(raw_features).any(axis=1)
     features = raw_features[mask]                               # Drop samples with some missing values
+    good_sample_names = sample_names[mask]                          # Keep the sample names corresponding to the features
+
+    bad_sample_names = sample_names[~mask]                      # Sample names with missing values
+
     scaled_features = StandardScaler().fit_transform(features)  # Standardize the features
     features_pca = PCA(n_components=2).fit_transform(scaled_features)
-    return dataset, raw_features, features, scaled_features, features_pca
+    return dataset, good_sample_names, bad_sample_names, raw_features, features, scaled_features, features_pca
 
 def detect_outliers(outlier_detector, sample_names, features, alpha=0.05):
     squared_distances = outlier_detector.decision_function(features)
@@ -46,21 +52,22 @@ def plot(data, title, xlabel, ylabel, extra_plots=[]):
 
 def main():
     alpha = 0.05
-    selected_data_type = 2
-    dataset, raw_features, features, scaled_features, features_pca = fetch_data()
-    selected_data = [dataset, raw_features, features, scaled_features, features_pca][selected_data_type]
+    dataset, good_sample_names, bad_sample_names, raw_features, features, scaled_features, features_pca = fetch_data()
+    selected_data = [dataset, raw_features, features, scaled_features, features_pca][2]
     
     outlier_detector = EllipticEnvelope(contamination=0.49, support_fraction=1, random_state=42)
     outlier_detector.fit(features)
-    print(features.shape)
+
     squared_distances = outlier_detector.decision_function(features)
     distances = np.sqrt(np.abs(squared_distances))  # Convert to distances
     print("Max:", np.max(distances), "Min:", np.min(distances))
 
     p_values = chi2.cdf(distances, df=outlier_detector.n_features_in_)
     is_outlier = p_values > (1 - alpha)
-    outlier_names = list(sample_names[is_outlier])
-    confidences = p_values
+    outlier_names = list(good_sample_names[is_outlier])
+    confidences = [(sample_name, p_value) for sample_name, p_value in zip(good_sample_names, p_values)]      # Compile confidence values
+    confidences += [(sample_name, 0.0) for sample_name in bad_sample_names]                                  # Add 0.0 confidence for samples with missing values
+
     pct = is_outlier.sum() / len(features) * 100
 
 
@@ -72,3 +79,6 @@ def main():
     # extra_plots = [lambda: plt.axhline(y=1-alpha, color='r', linestyle='--', label=f'Selection Threshold: alpha = {alpha}')]
     # plot(outlier_probabilities, "Outlier Probabilities", "Sample Index", "Outlier Probability", extra_plots)
     return outlier_names, confidences
+
+if __name__ == "__main__":
+    main()

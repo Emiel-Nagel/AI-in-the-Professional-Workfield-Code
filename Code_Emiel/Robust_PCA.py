@@ -13,10 +13,14 @@ def fetch_data():
 
     cols = dataset.columns
     features = dataset.loc[:, cols[1:]].values              # Exclude the sample names (index 0) from features
+    sample_names = dataset.loc[:, cols[0]].values              # Sample names are in the first column
+    
     mask = ~np.isnan(features).any(axis=1)
     features = features[mask]                               # Drop samples with some missing values
+    good_sample_names = sample_names[mask]                          # Keep the sample names corresponding to the features
+    bad_sample_names = sample_names[~mask]                      # Sample names with missing values
 
-    return dataset, features
+    return dataset, features, good_sample_names, bad_sample_names
 
 def plot(rpca_data, pyrpca_data, title, xlabel, ylabel, extra_plots=[]):
     if extra_plots is None:
@@ -58,7 +62,7 @@ def plot(rpca_data, pyrpca_data, title, xlabel, ylabel, extra_plots=[]):
     plt.show()
 
 def norm_to_prob(x: np.ndarray) -> np.ndarray:
-    """Convert a non‑negative 1‑D array to a probability distribution."""
+    """Convert a non-negative 1-D array to a probability distribution."""
     total = x.sum()
     if total == 0:
         return np.full_like(x, 1 / len(x), dtype=float)
@@ -145,20 +149,26 @@ def export_suspects_to_excel(
 
 def main():
     alpha = 0.05
-    dataset, features = fetch_data()
+    dataset, features, good_sample_names, bad_sample_names = fetch_data()
     print(features.shape)
 
     x = StandardScaler(with_mean=True, with_std=True).fit_transform(features)
     rpca_values = rpca_pipeline(alpha, x)
     pyrpca_values = pyrpca_pipeline(alpha, x)
-    plot(rpca_values[0], pyrpca_values[0],
-        title="Row Outlier Scores",
-        xlabel="Row index",
-        ylabel="‖S‖₁ per row",
-        # extra_plots=[lambda ax: ax.axhline(cutoff, ls="--", color="k")]
-    )
+    # plot(rpca_values[0], pyrpca_values[0],
+    #     title="Row Outlier Scores",
+    #     xlabel="Row index",
+    #     ylabel="‖S‖₁ per row",
+    #     # extra_plots=[lambda ax: ax.axhline(cutoff, ls="--", color="k")]
+    # )
     export_suspects_to_excel(dataset, rpca_values[2], pyrpca_values[2])
-
+    rpca_outlier_names = good_sample_names[rpca_values[2]]
+    rpca_confidences = [(sample_name, p_value) for sample_name, p_value in zip(good_sample_names, rpca_values[1])]      # Compile confidence values
+    rpca_confidences += [(sample_name, 0.0) for sample_name in bad_sample_names]                                  # Add 0.0 confidence for samples with missing values
+    pyrpca_outlier_names = good_sample_names[pyrpca_values[2]]
+    pyrpca_confidences = [(sample_name, p_value) for sample_name, p_value in zip(good_sample_names, pyrpca_values[1])]      # Compile confidence values
+    pyrpca_confidences += [(sample_name, 0.0) for sample_name in bad_sample_names]                                  # Add 0.0 confidence for samples with missing values
+    
     # rpca = RobustPCA(max_iter=10000, tol=1e-6).fit(x)           # robust decomposition
     # L, S = rpca.L_, rpca.S_           # robust decomposition
 
@@ -178,4 +188,4 @@ def main():
     # plot(row_outlier_score, title="Row Outlier Scores", xlabel="Row index", ylabel="‖S‖₁ per row",
     #     extra_plots=[lambda: plt.axhline(cutoff, linestyle="--", label=f"Cutoff={cutoff:.2f}")]
     # )
-    return "Hi"
+    return rpca_outlier_names, rpca_confidences, pyrpca_outlier_names, pyrpca_confidences
