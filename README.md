@@ -54,7 +54,7 @@ Pre-trained models or model artifacts used by the detector.
 
 - Emiel Nagel
 - Patricia Priscorniță 
-- Ramireddy, A.R. (Abhinav)
+- Abhinav Ramireddy
 - Nicolas Sanmartin de Miranda
 
 ---
