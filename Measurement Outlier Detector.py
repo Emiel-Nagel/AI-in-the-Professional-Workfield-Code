@@ -118,7 +118,6 @@ def compute_confidences(sample_ids, errors, dep_cols, eps=1e-8):
 
 
 if __name__ == "__main__":
-    # 1) load your full DataFrame
     df = pd.read_csv("refData_obf.csv", index_col="SampleId")
     traindf = df.copy()
     if traindf.isna().any().any():
@@ -126,7 +125,6 @@ if __name__ == "__main__":
 
     testdf = df.copy()
     
-    # 2) define your measurement groups
     measurements = [
         ("A_AL_CO", "A_B_CO", "A_CA_CO", "A_NI_RT", "A_CEC_CO", "A_CU_CO", "A_FE_CO", "A_K_CO", "A_MG_CO", "A_MN_CO", "A_NA_CO", "A_P_CO", "A_S_CO", "A_ZN_CO"),
         ("A_AL_M3", "A_B_M3", "A_CA_M3", "A_CU_M3", "A_FE_M3", "A_K_M3", "A_MG_M3", "A_MN_M3", "A_NA_M3", "A_P_M3", "A_S_M3", "A_ZN_M3"),
@@ -141,7 +139,6 @@ if __name__ == "__main__":
     measurement_names = ["_CO", "_M3", "_RT", "_MI", "_OF", "_IF", "_SA", "_WA", "_KCL"]
     variables = list(df.columns)
 
-    # 3) loop over each measurement, build/train or load, score
     all_confidences = []        # should be a list of dataframes, one per measurement
     for measurement, name in zip(measurements, measurement_names):
         independent_variables = [v for v in variables if v not in measurement]
@@ -167,7 +164,6 @@ if __name__ == "__main__":
 
         all_confidences.append(measurement_confidences)
 
-    # 4) concatenate all measurement‐level confidences side by side
     raw_confidences = pd.concat(all_confidences, axis=1)
     print(raw_confidences.columns.tolist())
     final = raw_confidences[measurement_names]
