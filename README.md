@@ -1,6 +1,6 @@
 # Measurement Outlier Detector
 
-This repository provides tools and scripts for detecting outliers in measurement datasets using machine learning ensemble methods.
+This repository provides tools and scripts for detecting outliers in the AI in the Professional Workfield project.
 
 ## Repository Structure
 
